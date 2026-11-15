@@ -18,7 +18,6 @@ def index():
 def dashboard():
     return render_template('dashboard.html')
 
-# 1. LOGIN & AUDIT LOG
 @app.route('/api/login', methods=['POST'])
 def api_login():
     data = request.json
@@ -52,7 +51,6 @@ def api_login():
     conn.close()
     return jsonify({"success": True, "role": role, "username": username})
 
-# 2. AUDIT LOGS (HR Admin)
 @app.route('/api/logs', methods=['GET'])
 def get_audit_logs():
     conn = get_db_connection()
@@ -117,7 +115,6 @@ def add_employee():
         conn.close()
         return jsonify({"success": False, "message": str(e)}), 400
 
-# 5. ADMIN EDIT EMPLOYEE JOB INFO ONLY
 @app.route('/api/employees/<int:emp_id>', methods=['PUT'])
 def admin_update_employee(emp_id):
     data = request.json
@@ -130,7 +127,6 @@ def admin_update_employee(emp_id):
     conn.close()
     return jsonify({"success": True})
 
-# 6. ADMIN DELETE EMPLOYEE
 @app.route('/api/employees/<int:emp_id>', methods=['DELETE'])
 def delete_employee(emp_id):
     conn = get_db_connection()
@@ -179,7 +175,6 @@ def update_own_profile():
     conn.close()
     return jsonify({"success": True})
 
-# 8. GET COMPANY RATINGS & PERFORMANCE TELEMETRY
 @app.route('/api/performance', methods=['GET'])
 def get_performance():
     conn = get_db_connection()
@@ -201,7 +196,6 @@ def get_performance():
         "reviews": reviews
     })
 
-# 9. SUBMIT COMPANY RATING / FEEDBACK
 @app.route('/api/performance', methods=['POST'])
 def add_performance_rating():
     data = request.json
