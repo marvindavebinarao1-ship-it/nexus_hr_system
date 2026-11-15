@@ -7,7 +7,7 @@ def get_db_connection():
             host='localhost',
             database='hr_management',
             user='root',
-            password=''  # Default XAMPP MySQL password is blank
+            password=''
         )
         return connection
     except Error as e:
