@@ -31,7 +31,6 @@
 </head>
 <body class="text-gray-200 min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 
-  <!-- Sidebar Navigation -->
   <aside class="w-full md:w-64 bg-[#060c0f] border-b md:border-b-0 md:border-r border-[#00ff41]/30 p-5 flex flex-col justify-between shrink-0 z-20">
     <div>
       <div class="mb-6">
@@ -72,7 +71,6 @@
     </div>
   </aside>
 
-  <!-- Main Content Area with Smooth Transitions -->
   <main class="flex-1 p-6 relative overflow-y-auto">
     <div class="flex flex-wrap justify-between items-center gap-4 border-b border-[#00ff41]/20 pb-4 mb-6">
       <div>
@@ -89,9 +87,7 @@
       </div>
     </div>
 
-    <!-- VIEW 1: OPERATIVES DIRECTORY -->
     <div id="view-operatives" class="dashboard-view active space-y-6">
-      <!-- KPI Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="panel p-4"><p class="text-xs text-gray-400">TOTAL_OPERATIVES</p><p id="statTotal" class="font-cyber text-2xl text-[#00ff41] mt-1">0</p></div>
         <div class="panel panel-cyan p-4"><p class="text-xs text-gray-400">ACTIVE_ON_GRID</p><p id="statActive" class="font-cyber text-2xl text-[#00f3ff] mt-1">0</p></div>
@@ -99,12 +95,10 @@
         <div class="panel panel-cyan p-4"><p class="text-xs text-gray-400">MONTHLY_PAYROLL</p><p id="statPayroll" class="font-cyber text-2xl text-white mt-1">$0</p></div>
       </div>
 
-      <!-- Search Bar -->
       <div class="panel p-4 flex gap-3">
         <input type="text" id="searchInput" placeholder="> Search by Name, Code, Login ID, or Role..." class="flex-1 bg-[#030708] border border-[#00ff41]/30 px-3 py-2 text-xs text-[#00ff41] focus:outline-none" />
       </div>
-
-      <!-- Employee Table -->
+      
       <div class="panel overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead class="bg-[#00ff41]/10 text-[#00ff41] border-b border-[#00ff41]/30 uppercase">
@@ -124,7 +118,6 @@
       </div>
     </div>
 
-    <!-- VIEW 2: CREATE EMPLOYEE -->
     <div id="view-create" class="dashboard-view space-y-6 max-w-xl mx-auto">
       <div class="panel p-6 border-[#00ff41]">
         <div class="flex justify-between items-center border-b border-[#00ff41]/30 pb-3 mb-4">
@@ -167,7 +160,6 @@
       </div>
     </div>
 
-    <!-- VIEW 3: MY PROFILE -->
     <div id="view-profile" class="dashboard-view space-y-6 max-w-xl mx-auto">
       <div class="panel p-6 border-[#00f3ff]">
         <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
@@ -197,7 +189,6 @@
       </div>
     </div>
 
-    <!-- VIEW 4: PERFORMANCE & RATINGS -->
     <div id="view-performance" class="dashboard-view space-y-6">
       <div class="panel panel-cyan p-5 space-y-5">
         <div class="flex flex-wrap justify-between items-center gap-3 border-b border-[#00f3ff]/30 pb-3">
@@ -253,7 +244,6 @@
       </div>
     </div>
 
-    <!-- VIEW 5: AUDIT LOGS (Admin Only) -->
     <div id="view-audit" class="dashboard-view space-y-6">
       <div class="panel p-5 space-y-3">
         <div class="flex justify-between items-center border-b border-[#00f3ff]/20 pb-2">
@@ -265,7 +255,6 @@
     </div>
   </main>
 
-  <!-- MODAL: ADMIN EDIT JOB INFO -->
   <div id="editEmpModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="bg-[#070d10] border border-[#00f3ff] w-full max-w-md p-6 shadow-[0_0_25px_rgba(0,243,255,0.25)]">
       <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
@@ -303,7 +292,6 @@
     </div>
   </div>
 
-  <!-- MODAL: SUBMIT COMPANY RATING -->
   <div id="ratingModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="bg-[#070d10] border border-[#00f3ff] w-full max-w-md p-6 shadow-[0_0_25px_rgba(0,243,255,0.25)]">
       <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
@@ -355,7 +343,6 @@
       document.getElementById('sideCreateEmpBtn').style.display = 'none';
     }
 
-    // Smooth View Switcher
     function switchView(viewName) {
       document.querySelectorAll('.dashboard-view').forEach(v => v.classList.remove('active'));
       document.querySelectorAll('aside nav button').forEach(b => {
@@ -601,8 +588,7 @@
 
     document.getElementById('searchInput').addEventListener('input', renderTable);
     setInterval(() => { document.getElementById('liveClock').textContent = new Date().toLocaleTimeString(); }, 1000);
-    
-    // Initial Load
+
     fetchEmployees().then(() => {
       initProfileForm();
     });
