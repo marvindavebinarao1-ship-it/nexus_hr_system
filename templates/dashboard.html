@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS_HR // COMMAND DASHBOARD</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'JetBrains Mono', monospace; background-color: #04080a; }
+    .font-cyber { font-family: 'Orbitron', sans-serif; }
+    .panel { background: rgba(8, 15, 19, 0.88); border: 1px solid rgba(0, 255, 65, 0.25); }
+    .panel-cyan { border-color: rgba(0, 243, 255, 0.35); }
+    .dashboard-view {
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+      pointer-events: none;
+      position: absolute;
+      width: 100%;
+      display: none;
+    }
+    .dashboard-view.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+      position: relative;
+      display: block;
+    }
+  </style>
+</head>
+<body class="text-gray-200 min-h-screen flex flex-col md:flex-row overflow-x-hidden">
+
+  <!-- Sidebar Navigation -->
+  <aside class="w-full md:w-64 bg-[#060c0f] border-b md:border-b-0 md:border-r border-[#00ff41]/30 p-5 flex flex-col justify-between shrink-0 z-20">
+    <div>
+      <div class="mb-6">
+        <span class="text-[10px] text-[#00f3ff] tracking-widest">// MAINFRAME_UI</span>
+        <h1 class="font-cyber text-xl font-bold text-white">NEXUS<span class="text-[#00ff41]">_HR</span></h1>
+        <p id="loggedUserBadge" class="text-[11px] text-[#00ff41] mt-2 break-all"></p>
+      </div>
+      <nav class="space-y-2 text-sm">
+        <button onclick="switchView('operatives')" id="nav-operatives" class="w-full text-left flex items-center justify-between px-3 py-2.5 bg-[#00ff41]/15 border-l-2 border-[#00ff41] text-[#00ff41] transition">
+          <span>&gt; OPERATIVES</span>
+        </button>
+        
+        <button id="sideCreateEmpBtn" onclick="switchView('create')" class="w-full text-left flex items-center justify-between px-3 py-2.5 text-[#00ff41] hover:bg-[#00ff41]/15 border border-[#00ff41]/30 transition">
+          <span>+ CREATE_EMPLOYEE</span>
+          <span class="text-[10px] bg-[#00ff41] text-black px-1 font-bold">NEW</span>
+        </button>
+
+        <button onclick="switchView('profile')" id="nav-profile" class="w-full text-left flex items-center justify-between px-3 py-2.5 text-[#00f3ff] hover:bg-[#00f3ff]/10 transition">
+          <span>&gt; MY_PROFILE</span>
+          <span class="text-[10px] border border-[#00f3ff] px-1">SELF</span>
+        </button>
+
+        <button onclick="switchView('performance')" id="nav-performance" class="w-full text-left flex items-center justify-between px-3 py-2.5 text-gray-400 hover:text-[#00f3ff] transition">
+          <span>&gt; PERFORMANCE</span>
+        </button>
+
+        <button id="navAuditLink" onclick="switchView('audit')" class="w-full text-left flex items-center justify-between px-3 py-2.5 text-gray-400 hover:text-[#00f3ff] transition">
+          <span>&gt; AUDIT_LOGS</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="mt-8 pt-4 border-t border-gray-800 text-xs">
+      <div class="text-gray-400 mb-2">SYS_CLOCK: <span id="liveClock" class="text-[#00f3ff]">00:00:00</span></div>
+      <a href="/" onclick="localStorage.clear()" class="block text-center py-2 border border-[#ff0055]/60 text-[#ff0055] hover:bg-[#ff0055] hover:text-white transition">
+        [ DISCONNECT ]
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content Area with Smooth Transitions -->
+  <main class="flex-1 p-6 relative overflow-y-auto">
+    <div class="flex flex-wrap justify-between items-center gap-4 border-b border-[#00ff41]/20 pb-4 mb-6">
+      <div>
+        <h2 class="font-cyber text-lg text-white" id="headerTitle">PERSONNEL_DIRECTORY</h2>
+        <p class="text-xs text-gray-400">Access Level: <span id="roleDisplay" class="text-[#00f3ff] font-bold"></span></p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <button onclick="switchView('profile')" class="px-4 py-2 bg-[#00f3ff]/15 border border-[#00f3ff] text-[#00f3ff] hover:bg-[#00f3ff] hover:text-black text-xs font-bold uppercase transition">
+          [ MY_PROFILE & PHOTO ]
+        </button>
+        <button id="topCreateEmpBtn" onclick="switchView('create')" class="px-4 py-2 bg-[#00ff41] text-black hover:bg-[#00f3ff] text-xs font-bold uppercase tracking-wider transition shadow-[0_0_15px_rgba(0,255,65,0.4)]">
+          + CREATE_NEW_EMPLOYEE
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEW 1: OPERATIVES DIRECTORY -->
+    <div id="view-operatives" class="dashboard-view active space-y-6">
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="panel p-4"><p class="text-xs text-gray-400">TOTAL_OPERATIVES</p><p id="statTotal" class="font-cyber text-2xl text-[#00ff41] mt-1">0</p></div>
+        <div class="panel panel-cyan p-4"><p class="text-xs text-gray-400">ACTIVE_ON_GRID</p><p id="statActive" class="font-cyber text-2xl text-[#00f3ff] mt-1">0</p></div>
+        <div class="panel p-4"><p class="text-xs text-gray-400">ON_LEAVE</p><p id="statLeave" class="font-cyber text-2xl text-[#ff0055] mt-1">0</p></div>
+        <div class="panel panel-cyan p-4"><p class="text-xs text-gray-400">MONTHLY_PAYROLL</p><p id="statPayroll" class="font-cyber text-2xl text-white mt-1">$0</p></div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="panel p-4 flex gap-3">
+        <input type="text" id="searchInput" placeholder="> Search by Name, Code, Login ID, or Role..." class="flex-1 bg-[#030708] border border-[#00ff41]/30 px-3 py-2 text-xs text-[#00ff41] focus:outline-none" />
+      </div>
+
+      <!-- Employee Table -->
+      <div class="panel overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-[#00ff41]/10 text-[#00ff41] border-b border-[#00ff41]/30 uppercase">
+            <tr>
+              <th class="p-3">AVATAR</th>
+              <th class="p-3">CODE</th>
+              <th class="p-3">OPERATIVE_NAME</th>
+              <th class="p-3">LOGIN_ID</th>
+              <th class="p-3">DIVISION</th>
+              <th class="p-3">ROLE</th>
+              <th class="p-3">CREDITS</th>
+              <th class="p-3 text-right">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="employeeTableBody" class="divide-y divide-gray-800"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW 2: CREATE EMPLOYEE -->
+    <div id="view-create" class="dashboard-view space-y-6 max-w-xl mx-auto">
+      <div class="panel p-6 border-[#00ff41]">
+        <div class="flex justify-between items-center border-b border-[#00ff41]/30 pb-3 mb-4">
+          <h3 class="font-cyber text-sm text-[#00ff41]">+ REGISTER_NEW_OPERATIVE</h3>
+          <button onclick="switchView('operatives')" class="text-gray-400 hover:text-[#ff0055] text-xs">[CANCEL]</button>
+        </div>
+        <form id="createEmpForm" class="space-y-4 text-xs">
+          <div>
+            <label class="block text-[#00ff41] mb-1">FULL_NAME *</label>
+            <input type="text" id="newEmpName" required placeholder="e.g., Morpheus Vance" class="w-full bg-[#030708] border border-[#00ff41]/40 p-3 text-[#00ff41]" />
+          </div>
+          <div>
+            <label class="block text-[#00ff41] mb-1">ASSIGN_LOGIN_EMAIL *</label>
+            <input type="email" id="newEmpEmail" required placeholder="e.g., morpheus@nexus.corp" class="w-full bg-[#030708] border border-[#00ff41]/40 p-3 text-[#00ff41]" />
+          </div>
+          <div>
+            <label class="block text-[#00ff41] mb-1">DIVISION *</label>
+            <select id="newEmpDept" class="w-full bg-[#030708] border border-[#00ff41]/40 p-3 text-[#00ff41]">
+              <option value="CyberSec">CyberSec</option>
+              <option value="NetOps">NetOps</option>
+              <option value="AI_Core">AI_Core</option>
+              <option value="HR_Command">HR_Command</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[#00ff41] mb-1">DESIGNATED_ROLE *</label>
+            <input type="text" id="newEmpRole" required placeholder="e.g., Systems Architect" class="w-full bg-[#030708] border border-[#00ff41]/40 p-3 text-[#00ff41]" />
+          </div>
+          <div>
+            <label class="block text-[#00ff41] mb-1">MONTHLY_CREDITS ($) *</label>
+            <input type="number" id="newEmpSalary" required placeholder="e.g., 5000" class="w-full bg-[#030708] border border-[#00ff41]/40 p-3 text-[#00ff41]" />
+          </div>
+          <div class="p-3 bg-[#00f3ff]/10 border border-[#00f3ff]/30 text-[11px] text-[#00f3ff]">
+            Default Password: <span class="font-bold">matrix2026</span>
+          </div>
+          <button type="submit" class="w-full py-3 bg-[#00ff41] text-black font-bold uppercase tracking-wider hover:bg-[#00f3ff] transition">
+            COMMIT_OPERATIVE_TO_MAINFRAME
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- VIEW 3: MY PROFILE -->
+    <div id="view-profile" class="dashboard-view space-y-6 max-w-xl mx-auto">
+      <div class="panel p-6 border-[#00f3ff]">
+        <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
+          <h3 class="font-cyber text-sm text-[#00f3ff]">OPERATIVE_SELF_PROFILE</h3>
+          <button onclick="switchView('operatives')" class="text-gray-400 hover:text-[#ff0055] text-xs">[RETURN]</button>
+        </div>
+        <form id="myProfileForm" class="space-y-4 text-xs">
+          <div class="flex items-center gap-4">
+            <img id="profilePreview" src="" alt="Avatar" class="w-16 h-16 rounded-full border-2 border-[#00ff41] object-cover bg-black" />
+            <div class="flex-1">
+              <label class="block text-[#00f3ff] mb-1">UPLOAD_NEW_AVATAR</label>
+              <input type="file" id="profilePhotoInput" accept="image/*" class="w-full text-gray-400 file:mr-2 file:py-1 file:px-2 file:border file:border-[#00ff41] file:bg-[#00ff41]/10 file:text-[#00ff41]" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-[#00f3ff] mb-1">DISPLAY_NAME</label>
+            <input type="text" id="profileNameInput" required class="w-full bg-[#030708] border border-gray-700 p-3 text-[#00ff41]" />
+          </div>
+          <div>
+            <label class="block text-[#00f3ff] mb-1">NEW_ACCESS_KEY (Leave blank to keep current)</label>
+            <input type="password" id="profilePasswordInput" placeholder="••••••••••••" class="w-full bg-[#030708] border border-gray-700 p-3 text-[#00ff41]" />
+          </div>
+          <button type="submit" class="w-full py-3 bg-[#00ff41] text-black font-bold uppercase hover:bg-[#00f3ff] transition">
+            SAVE_PERSONAL_PROFILE
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- VIEW 4: PERFORMANCE & RATINGS -->
+    <div id="view-performance" class="dashboard-view space-y-6">
+      <div class="panel panel-cyan p-5 space-y-5">
+        <div class="flex flex-wrap justify-between items-center gap-3 border-b border-[#00f3ff]/30 pb-3">
+          <div>
+            <span class="text-[10px] text-[#00ff41] tracking-widest">// ENTERPRISE_TELEMETRY</span>
+            <h3 class="font-cyber text-sm text-white">COMPANY_RATING &amp; PERFORMANCE_INDEX</h3>
+          </div>
+          <button onclick="openRatingModal()" class="px-3 py-1.5 bg-[#00f3ff]/15 border border-[#00f3ff] text-[#00f3ff] hover:bg-[#00f3ff] hover:text-black text-xs font-bold uppercase transition">
+            + SUBMIT_RATING
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-[#030708] border border-[#00ff41]/30 p-4 flex flex-col justify-between">
+            <p class="text-[11px] text-gray-400">OVERALL_COMPANY_RATING</p>
+            <div class="flex items-baseline gap-2 my-2">
+              <span id="avgCompanyRating" class="font-cyber text-3xl text-[#00ff41]">5.0</span>
+              <span class="text-xs text-gray-400">/ 5.0</span>
+            </div>
+            <p id="totalReviewsCount" class="text-[11px] text-[#00f3ff]">Based on 0 operative reports</p>
+          </div>
+
+          <div class="bg-[#030708] border border-[#00ff41]/30 p-4 space-y-2.5 md:col-span-2">
+            <p class="text-[11px] text-gray-400 uppercase">DIVISION_OPERATIONAL_PERFORMANCE</p>
+            <div>
+              <div class="flex justify-between text-[11px] mb-1">
+                <span class="text-[#00ff41]">CyberSec // Threat Defense</span>
+                <span class="text-white font-bold">96%</span>
+              </div>
+              <div class="w-full bg-gray-900 h-2 border border-gray-800"><div class="bg-[#00ff41] h-full" style="width: 96%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-[11px] mb-1">
+                <span class="text-[#00f3ff]">NetOps // Grid Uptime</span>
+                <span class="text-white font-bold">92%</span>
+              </div>
+              <div class="w-full bg-gray-900 h-2 border border-gray-800"><div class="bg-[#00ff41] h-full" style="width: 92%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-[11px] mb-1">
+                <span class="text-purple-400">AI_Core // Neural Optimization</span>
+                <span class="text-white font-bold">89%</span>
+              </div>
+              <div class="w-full bg-gray-900 h-2 border border-gray-800"><div class="bg-purple-400 h-full" style="width: 89%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[11px] text-gray-400 uppercase mb-2">// RECENT_OPERATIVE_PULSE_REPORTS</p>
+          <div id="companyReviewsList" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 5: AUDIT LOGS (Admin Only) -->
+    <div id="view-audit" class="dashboard-view space-y-6">
+      <div class="panel p-5 space-y-3">
+        <div class="flex justify-between items-center border-b border-[#00f3ff]/20 pb-2">
+          <h3 class="font-cyber text-xs text-[#00f3ff]">// LIVE_SYSTEM_AUDIT_TRAIL</h3>
+          <button onclick="fetchLogs()" class="text-[10px] text-gray-400 hover:text-[#00ff41]">[REFRESH_LOGS]</button>
+        </div>
+        <div id="auditLogContainer" class="space-y-1.5 max-h-96 overflow-y-auto text-xs font-mono text-gray-300"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: ADMIN EDIT JOB INFO -->
+  <div id="editEmpModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-[#070d10] border border-[#00f3ff] w-full max-w-md p-6 shadow-[0_0_25px_rgba(0,243,255,0.25)]">
+      <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
+        <h3 id="editModalTitle" class="font-cyber text-sm text-[#00f3ff]">EDIT_JOB_RECORD</h3>
+        <button onclick="closeEditModal()" class="text-gray-400 hover:text-[#ff0055]">[X]</button>
+      </div>
+      <form id="editEmpForm" class="space-y-3 text-xs">
+        <input type="hidden" id="editEmpId" />
+        <div>
+          <label class="block text-[#00f3ff] mb-1">FULL_NAME</label>
+          <input type="text" id="editEmpName" required class="w-full bg-[#030708] border border-gray-700 p-2.5 text-[#00ff41]" />
+        </div>
+        <div>
+          <label class="block text-[#00f3ff] mb-1">DIVISION</label>
+          <select id="editEmpDept" class="w-full bg-[#030708] border border-gray-700 p-2.5 text-[#00ff41]">
+            <option value="CyberSec">CyberSec</option>
+            <option value="NetOps">NetOps</option>
+            <option value="AI_Core">AI_Core</option>
+            <option value="HR_Command">HR_Command</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[#00f3ff] mb-1">DESIGNATED_ROLE</label>
+          <input type="text" id="editEmpRole" required class="w-full bg-[#030708] border border-gray-700 p-2.5 text-[#00ff41]" />
+        </div>
+        <div>
+          <label class="block text-[#00f3ff] mb-1">MONTHLY_CREDITS ($)</label>
+          <input type="number" id="editEmpSalary" required class="w-full bg-[#030708] border border-gray-700 p-2.5 text-[#00ff41]" />
+        </div>
+        <p class="text-[10px] text-gray-500">* Privacy Lock: Admins cannot edit personal photos or passwords.</p>
+        <button type="submit" class="w-full py-2.5 bg-[#00f3ff] text-black font-bold uppercase hover:bg-[#00ff41] transition">
+          SAVE_JOB_CHANGES
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SUBMIT COMPANY RATING -->
+  <div id="ratingModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-[#070d10] border border-[#00f3ff] w-full max-w-md p-6 shadow-[0_0_25px_rgba(0,243,255,0.25)]">
+      <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
+        <h3 class="font-cyber text-sm text-[#00f3ff]">SUBMIT_COMPANY_EVALUATION</h3>
+        <button onclick="closeRatingModal()" class="text-gray-400 hover:text-[#ff0055]">[X]</button>
+      </div>
+      <form id="ratingForm" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-[#00f3ff] mb-1">EVALUATION_CATEGORY</label>
+          <select id="ratingCategory" class="w-full bg-[#030708] border border-gray-700 p-2.5 text-[#00ff41]">
+            <option value="WORK_CULTURE">WORK_CULTURE</option>
+            <option value="INFRASTRUCTURE">INFRASTRUCTURE</option>
+            <option value="LEADERSHIP">LEADERSHIP</option>
+            <option value="COMPENSATION">COMPENSATION</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[#00f3ff] mb-1">RATING_SCORE (1 to 5)</label>
+          <select id="ratingScore" class="w-full bg-[#030708] border border-gray-700 p-2.5 text-[#00ff41]">
+            <option value="5">★★★★★ (5 - Optimal)</option>
+            <option value="4">★★★★☆ (4 - Strong)</option>
+            <option value="3">★★★☆☆ (3 - Nominal)</option>
+            <option value="2">★★☆☆☆ (2 - Needs Upgrade)</option>
+            <option value="1">★☆☆☆☆ (1 - Critical)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[#00f3ff] mb-1">FEEDBACK_REPORT</label>
+          <textarea id="ratingFeedback" rows="3" required placeholder="Enter performance notes or company feedback..." class="w-full bg-[#030708] border border-gray-700 p-2.5 text-[#00ff41]"></textarea>
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-[#00f3ff] text-black font-bold uppercase hover:bg-[#00ff41] transition">
+          TRANSMIT_RATING
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const currentRole = localStorage.getItem('nexus_role') || 'EMPLOYEE';
+    const currentUser = localStorage.getItem('nexus_user') || 'trinity@nexus.corp';
+    let employees = [];
+
+    document.getElementById('loggedUserBadge').textContent = `ID: ${currentUser}`;
+    document.getElementById('roleDisplay').textContent = currentRole;
+
+    if (currentRole !== 'HR_ADMIN') {
+      document.getElementById('navAuditLink').style.display = 'none';
+      document.getElementById('topCreateEmpBtn').style.display = 'none';
+      document.getElementById('sideCreateEmpBtn').style.display = 'none';
+    }
+
+    // Smooth View Switcher
+    function switchView(viewName) {
+      document.querySelectorAll('.dashboard-view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('aside nav button').forEach(b => {
+        b.classList.remove('bg-[#00ff41]/15', 'border-l-2', 'border-[#00ff41]', 'text-[#00ff41]');
+        b.classList.add('text-gray-400');
+      });
+
+      const targetView = document.getElementById(`view-${viewName}`);
+      if (targetView) {
+        targetView.classList.add('active');
+      }
+
+      const activeBtn = document.getElementById(`nav-${viewName}`) || (viewName === 'create' ? document.getElementById('sideCreateEmpBtn') : null);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-gray-400');
+        activeBtn.classList.add('bg-[#00ff41]/15', 'border-l-2', 'border-[#00ff41]', 'text-[#00ff41]');
+      }
+
+      const titles = {
+        'operatives': 'PERSONNEL_DIRECTORY',
+        'create': 'REGISTER_NEW_OPERATIVE',
+        'profile': 'OPERATIVE_SELF_PROFILE',
+        'performance': 'ENTERPRISE_TELEMETRY',
+        'audit': 'SYSTEM_AUDIT_LOGS'
+      };
+      document.getElementById('headerTitle').textContent = titles[viewName] || 'MAINFRAME';
+
+      if (viewName === 'profile') {
+        initProfileForm();
+      }
+    }
+
+    async function fetchEmployees() {
+      const res = await fetch('/api/employees');
+      employees = await res.json();
+      renderTable();
+    }
+
+    async function fetchLogs() {
+      if (currentRole !== 'HR_ADMIN') return;
+      const res = await fetch('/api/logs');
+      const logs = await res.json();
+      document.getElementById('auditLogContainer').innerHTML = logs.map(l => `
+        <div class="flex justify-between border-b border-gray-800/50 pb-1">
+          <span class="text-[#00ff41]">[${l.timestamp}]</span>
+          <span class="text-[#00f3ff]">${l.username}</span>
+          <span class="text-gray-400">${l.details}</span>
+        </div>
+      `).join('');
+    }
+
+    async function fetchPerformance() {
+      const res = await fetch('/api/performance');
+      const data = await res.json();
+
+      document.getElementById('avgCompanyRating').textContent = data.avg_rating.toFixed(1);
+      document.getElementById('totalReviewsCount').textContent = `Based on ${data.total_reviews} operative reports`;
+
+      document.getElementById('companyReviewsList').innerHTML = data.reviews.map(r => {
+        const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+        return `
+          <div class="bg-[#030708] border border-gray-800 p-3 space-y-1">
+            <div class="flex justify-between items-center text-[11px]">
+              <span class="text-[#00f3ff] font-bold">${r.category}</span>
+              <span class="text-[#00ff41] tracking-widest">${stars}</span>
+            </div>
+            <p class="text-xs text-gray-300">"${r.feedback}"</p>
+            <p class="text-[10px] text-gray-500">— ${r.username}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTable() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = employees.filter(e => 
+        e.name.toLowerCase().includes(query) || 
+        e.code.toLowerCase().includes(query) || 
+        (e.username && e.username.toLowerCase().includes(query)) ||
+        e.role.toLowerCase().includes(query)
+      );
+      
+      document.getElementById('employeeTableBody').innerHTML = filtered.map(emp => {
+        const isOwnRow = emp.username === currentUser;
+        let actionButtons = '';
+
+        if (isOwnRow) {
+          actionButtons += `<button onclick="switchView('profile')" class="text-[#00ff41] border border-[#00ff41]/50 px-2 py-0.5 hover:bg-[#00ff41] hover:text-black mr-2">[MY_PROFILE]</button>`;
+        }
+
+        if (currentRole === 'HR_ADMIN') {
+          actionButtons += `
+            <button onclick="openEditModal(${emp.id})" class="text-[#00f3ff] hover:underline mr-2">[EDIT_JOB]</button>
+            <button onclick="deleteEmp(${emp.id})" class="text-[#ff0055] hover:underline">[TERMINATE]</button>
+          `;
+        }
+
+        return `
+          <tr class="hover:bg-[#00ff41]/5 transition">
+            <td class="p-3">
+              <img src="${emp.photo_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + emp.code}" class="w-8 h-8 rounded-full border border-[#00ff41]/50 object-cover bg-black" />
+            </td>
+            <td class="p-3 text-[#00f3ff] font-bold">${emp.code}</td>
+            <td class="p-3 text-white font-semibold">${emp.name} ${isOwnRow ? '<span class="text-[10px] text-[#00ff41]">(YOU)</span>' : ''}</td>
+            <td class="p-3 text-gray-300 font-mono text-[11px]">${emp.username || 'N/A'}</td>
+            <td class="p-3 text-gray-300">${emp.dept}</td>
+            <td class="p-3 text-gray-400">${emp.role}</td>
+            <td class="p-3 text-[#00ff41]">${currentRole === 'HR_ADMIN' || isOwnRow ? '$' + Number(emp.salary).toLocaleString() : 'HIDDEN'}</td>
+            <td class="p-3 text-right">${actionButtons || '<span class="text-gray-600">VIEW_ONLY</span>'}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('statTotal').textContent = employees.length;
+      document.getElementById('statActive').textContent = employees.filter(e => e.status === 'ACTIVE').length;
+      document.getElementById('statLeave').textContent = employees.filter(e => e.status !== 'ACTIVE').length;
+      document.getElementById('statPayroll').textContent = currentRole === 'HR_ADMIN'
+        ? '$' + employees.reduce((s, e) => s + Number(e.salary), 0).toLocaleString()
+        : 'CLASSIFIED';
+    }
+
+    document.getElementById('createEmpForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch('/api/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('newEmpName').value,
+          username: document.getElementById('newEmpEmail').value,
+          dept: document.getElementById('newEmpDept').value,
+          role: document.getElementById('newEmpRole').value,
+          salary: document.getElementById('newEmpSalary').value
+        })
+      });
+      const result = await res.json();
+      if (result.success) {
+        document.getElementById('createEmpForm').reset();
+        switchView('operatives');
+        fetchEmployees();
+        fetchLogs();
+        alert(`Employee Created!\nCode: ${result.code}\nLogin ID: ${result.username}`);
+      } else {
+        alert('Error: ' + result.message);
+      }
+    });
+
+    function openEditModal(id) {
+      const emp = employees.find(e => e.id === id);
+      document.getElementById('editModalTitle').textContent = `EDIT_JOB_RECORD // ${emp.code}`;
+      document.getElementById('editEmpId').value = emp.id;
+      document.getElementById('editEmpName').value = emp.name;
+      document.getElementById('editEmpDept').value = emp.dept;
+      document.getElementById('editEmpRole').value = emp.role;
+      document.getElementById('editEmpSalary').value = emp.salary;
+      document.getElementById('editEmpModal').classList.remove('hidden');
+      document.getElementById('editEmpModal').classList.add('flex');
+    }
+    function closeEditModal() {
+      document.getElementById('editEmpModal').classList.add('hidden');
+      document.getElementById('editEmpModal').classList.remove('flex');
+    }
+
+    document.getElementById('editEmpForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editEmpId').value;
+      await fetch(`/api/employees/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('editEmpName').value,
+          dept: document.getElementById('editEmpDept').value,
+          role: document.getElementById('editEmpRole').value,
+          salary: document.getElementById('editEmpSalary').value
+        })
+      });
+      closeEditModal();
+      fetchEmployees();
+    });
+
+    function initProfileForm() {
+      const me = employees.find(e => e.username === currentUser);
+      if (!me) return;
+      document.getElementById('profilePreview').src = me.photo_url || '';
+      document.getElementById('profileNameInput').value = me.name;
+      document.getElementById('profilePasswordInput').value = '';
+    }
+
+    document.getElementById('myProfileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append('username', currentUser);
+      formData.append('name', document.getElementById('profileNameInput').value);
+      
+      const pwd = document.getElementById('profilePasswordInput').value;
+      if (pwd) formData.append('password', pwd);
+      
+      const fileInput = document.getElementById('profilePhotoInput');
+      if (fileInput.files.length > 0) {
+        formData.append('photo', fileInput.files[0]);
+      }
+
+      await fetch('/api/profile/update', { method: 'POST', body: formData });
+      switchView('operatives');
+      fetchEmployees();
+      fetchLogs();
+      alert('Personal profile & security credentials updated!');
+    });
+
+    function openRatingModal() {
+      document.getElementById('ratingForm').reset();
+      document.getElementById('ratingModal').classList.remove('hidden');
+      document.getElementById('ratingModal').classList.add('flex');
+    }
+    function closeRatingModal() {
+      document.getElementById('ratingModal').classList.add('hidden');
+      document.getElementById('ratingModal').classList.remove('flex');
+    }
+
+    document.getElementById('ratingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await fetch('/api/performance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: currentUser,
+          category: document.getElementById('ratingCategory').value,
+          rating: document.getElementById('ratingScore').value,
+          feedback: document.getElementById('ratingFeedback').value
+        })
+      });
+      closeRatingModal();
+      fetchPerformance();
+      fetchLogs();
+    });
+
+    async function deleteEmp(id) {
+      if (confirm('Confirm operative termination?')) {
+        await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+        fetchEmployees();
+        fetchLogs();
+      }
+    }
+
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    setInterval(() => { document.getElementById('liveClock').textContent = new Date().toLocaleTimeString(); }, 1000);
+    
+    // Initial Load
+    fetchEmployees().then(() => {
+      initProfileForm();
+    });
+    fetchLogs();
+    fetchPerformance();
+  </script>
+</body>
+</html>
